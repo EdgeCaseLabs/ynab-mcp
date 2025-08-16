@@ -1,28 +1,34 @@
-[tool.poetry]
+[project]
 name = "ynab-mcp"
 version = "0.1.0"
 description = "Model Context Protocol server for YNAB (You Need A Budget) API integration"
-authors = ["Wes Thomas <westhomas@edgecaselabs.com>"]
+authors = [
+    {name = "Wes Thomas", email = "westhomas@edgecaselabs.com"}
+]
 readme = "README.md"
-packages = [{include = "src"}]
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "ynab>=1.8.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0"
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-mcp = {extras = ["cli"], version = "^1.0.0"}
-ynab = "^1.8.0"
-pydantic = "^2.0.0"
-python-dotenv = "^1.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-pytest-asyncio = "^0.21.0"
-black = "^23.0.0"
-ruff = "^0.1.0"
-mypy = "^1.0.0"
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0"
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [tool.black]
 line-length = 100

@@ -5,7 +5,7 @@ A Model Context Protocol (MCP) server that provides comprehensive access to the 
 ## Features
 
 - **Complete YNAB API Coverage**: All YNAB API methods are exposed as MCP tools
-- **Docker Support**: Easy deployment using Docker and Docker Compose
+- **uv Integration**: Fast dependency management with uv
 - **Type-Safe**: Built with Python type hints and Pydantic models
 - **Error Handling**: Comprehensive error handling and logging
 - **Environment Configuration**: Simple configuration via environment variables
@@ -13,8 +13,7 @@ A Model Context Protocol (MCP) server that provides comprehensive access to the 
 
 ## Prerequisites
 
-- Docker and Docker Compose (for containerized deployment)
-- OR Python 3.10+ with Poetry (for local development)
+- Python 3.10+ with uv installed
 - A YNAB account with a Personal Access Token
 
 ## Getting Your YNAB API Key
@@ -27,50 +26,31 @@ A Model Context Protocol (MCP) server that provides comprehensive access to the 
 
 ## Installation
 
-### Using Docker (Recommended)
-
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ynab-mcp.git
+git clone https://github.com/EdgeCaseLabs/ynab-mcp.git
 cd ynab-mcp
 ```
 
-2. Copy the environment template:
+2. Install uv if you haven't already:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+3. Install dependencies:
+```bash
+uv sync
+```
+
+4. Copy and configure environment:
 ```bash
 cp .env.sample .env
+# Edit .env with your YNAB API key
 ```
 
-3. Edit `.env` and add your YNAB API key:
-```env
-YNAB_API_KEY=your_actual_api_key_here
-```
-
-4. Build and run with Docker Compose:
+5. Test the server:
 ```bash
-docker compose up --build
-```
-
-### Local Development Setup
-
-1. Install Poetry if you haven't already:
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-2. Install dependencies:
-```bash
-poetry install
-```
-
-3. Copy and configure environment:
-```bash
-cp .env.sample .env
-# Edit .env with your API key
-```
-
-4. Run the server:
-```bash
-poetry run python -m mcp run src/server.py
+uv run src/server.py
 ```
 
 ## Configuration
@@ -128,7 +108,52 @@ poetry run python -m mcp run src/server.py
 
 ## Usage Examples
 
-### Using with MCP Client
+### Claude Desktop Configuration
+
+To connect this YNAB MCP server to Claude Desktop, you need to configure it in your Claude Desktop settings.
+
+#### Configure Claude Desktop
+
+Create or edit your Claude Desktop configuration file:
+
+**macOS/Linux**: `~/.config/claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add the YNAB MCP server configuration (see `claude_desktop_config.json` for a complete example):
+
+```json
+{
+  "mcpServers": {
+    "ynab": {
+      "command": "/path/to/uv",
+      "args": ["run", "--directory", "/absolute/path/to/ynab-mcp", "src/server.py"],
+      "env": {
+        "YNAB_API_KEY": "your_ynab_api_key_here",
+        "DEFAULT_BUDGET_ID": "optional_default_budget_id"
+      }
+    }
+  }
+}
+```
+
+**Important**: 
+- Replace `/path/to/uv` with the output of `which uv` on your system
+- Replace `/absolute/path/to/ynab-mcp` with the actual absolute path to your project directory
+
+#### Restart Claude Desktop
+
+After updating the configuration, restart Claude Desktop. You should now see YNAB tools available in your conversations.
+
+#### Test the Connection
+
+Try asking Claude to help with your budget:
+
+- "Show me my current budgets"
+- "What's the balance in my checking account?"
+- "Create a transaction for $25 coffee at Starbucks"
+- "How much have I spent on groceries this month?"
+
+### Using with Other MCP Clients
 
 Once the server is running, you can connect to it using any MCP-compatible client. Here are some example tool calls:
 
@@ -168,47 +193,23 @@ YNAB uses milliunits for all monetary values:
 - $10.50 = 10500 milliunits
 - -$25.00 = -25000 milliunits (negative for expenses)
 
-## Docker Commands
-
-### Build the image
-```bash
-docker build -t ynab-mcp:latest .
-```
-
-### Run with Docker Compose
-```bash
-# Start the service
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Stop the service
-docker compose down
-```
-
-### Run standalone container
-```bash
-docker run --env-file .env ynab-mcp:latest
-```
-
 ## Development
 
 ### Running Tests
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 ### Linting and Formatting
 ```bash
 # Format code
-poetry run black src/
+uv run black src/
 
 # Lint code
-poetry run ruff src/
+uv run ruff src/
 
 # Type checking
-poetry run mypy src/
+uv run mypy src/
 ```
 
 ### Adding New Tools
@@ -233,9 +234,9 @@ ynab-mcp/
 │       ├── categories.py   # Category tools
 │       ├── payees.py       # Payee tools
 │       └── user.py         # User tools
-├── Dockerfile              # Docker image definition
-├── compose.yml            # Docker Compose configuration
-├── pyproject.toml         # Poetry dependencies
+├── pyproject.toml          # uv dependencies
+├── uv.lock                 # Locked dependencies
+├── claude_desktop_config.json # Sample Claude Desktop config
 └── .env.sample            # Environment template
 ```
 
@@ -246,15 +247,11 @@ ynab-mcp/
 - Verify the key using the `verify_api_key` tool
 - Check that the key has not expired in your YNAB settings
 
-### Docker Issues
-- Ensure Docker daemon is running
-- Check container logs: `docker compose logs`
-- Verify environment variables are loaded: `docker compose config`
 
 ### Connection Issues
 - Check network connectivity
-- Verify firewall settings if using HTTP transport
 - Ensure the YNAB API is accessible
+- Verify Claude Desktop can find the `uv` command (use full path)
 
 ## Rate Limiting
 
@@ -266,7 +263,7 @@ The YNAB API has rate limits. This server handles rate limit responses appropria
 ## Security
 
 - Never commit your `.env` file with real API keys
-- Use Docker secrets in production environments
+- Store API keys securely in environment variables
 - Rotate API keys regularly
 - Use read-only keys when possible
 
@@ -294,4 +291,4 @@ For issues and questions:
 
 - Built with the official [YNAB Python SDK](https://github.com/ynab/ynab-sdk-python)
 - Powered by [Model Context Protocol](https://modelcontextprotocol.io)
-- Containerized with Docker for easy deployment
+- Fast dependency management with [uv](https://github.com/astral-sh/uv)

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ynab": {
+      "command": "/Users/wes/.local/bin/uv",
+      "args": ["run", "--directory", "/Users/wes/Code/ynab-mcp", "src/server.py"],
+      "env": {
+        "YNAB_API_KEY": "your_ynab_api_key_here",
+        "DEFAULT_BUDGET_ID": "optional_default_budget_id",
+        "MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}

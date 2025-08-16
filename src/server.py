@@ -3,7 +3,7 @@ YNAB MCP Server - Main server implementation
 """
 import os
 import logging
-from typing import Optional
+from typing import Optional, Dict
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 import ynab
@@ -11,7 +11,7 @@ from ynab.api_client import ApiClient
 from ynab.configuration import Configuration
 
 # Import tool modules
-from src.tools import (
+from tools import (
     budgets,
     accounts,
     transactions,
@@ -35,6 +35,7 @@ mcp = FastMCP(os.getenv("MCP_SERVER_NAME", "YNAB MCP Server"))
 
 # Global YNAB client
 ynab_client: Optional[ApiClient] = None
+
 
 def get_ynab_client() -> ApiClient:
     """Get or create YNAB API client"""
@@ -89,32 +90,13 @@ def register_tools():
 # Initialize tools on startup
 register_tools()
 
-# Health check resource
-@mcp.resource("health://status")
-def health_check() -> dict:
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "YNAB MCP Server",
-        "version": "0.1.0",
-        "api_configured": bool(os.getenv("YNAB_API_KEY"))
-    }
+
 
 if __name__ == "__main__":
-    # Run the server
-    import asyncio
-    from mcp.server.stdio import stdio_server
-    
-    async def main():
-        async with stdio_server() as (read_stream, write_stream):
-            await mcp.run(
-                read_stream=read_stream,
-                write_stream=write_stream,
-                init_options={}
-            )
-    
+    # Run the server in STDIO mode for Claude Desktop
     try:
-        asyncio.run(main())
+        logger.info("Starting YNAB MCP server with STDIO transport")
+        mcp.run()
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")
     except Exception as e:
