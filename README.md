@@ -1,6 +1,6 @@
 # YNAB MCP Server
 
-A Model Context Protocol (MCP) server that provides comprehensive access to the YNAB (You Need A Budget) API. This server exposes all YNAB API functionality as MCP tools, allowing AI assistants and other MCP clients to interact with YNAB budgets, accounts, transactions, and more.
+A Model Context Protocol (MCP) server that provides comprehensive access to the YNAB (https://www.ynab.com) aka You Need A Budget API. This server exposes all YNAB API functionality as MCP tools, allowing AI assistants and other MCP clients to interact with YNAB budgets, accounts, transactions, and more.
 
 ## Features
 
