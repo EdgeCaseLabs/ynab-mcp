@@ -17,6 +17,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import the logging decorator
+from debug_utils import log_tool_call
+
 def register_tools(mcp: FastMCP, get_client_func):
     """Register transaction-related tools with the MCP server"""
     
@@ -30,6 +33,7 @@ def register_tools(mcp: FastMCP, get_client_func):
         return budget_id
     
     @mcp.tool()
+    @log_tool_call
     def get_transactions(
         budget_id: str = "default",
         since_date: Optional[str] = None,
@@ -64,7 +68,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 for trans in response.data.transactions:
                     transactions_list.append({
                         "id": trans.id,
-                        "date": trans.date,
+                        "date": trans.var_date.isoformat() if trans.var_date else None,
                         "amount": trans.amount,
                         "amount_formatted": f"${trans.amount / 1000:.2f}",
                         "memo": trans.memo,
@@ -92,6 +96,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_transaction_by_id(
         transaction_id: str,
         budget_id: str = "default"
@@ -119,7 +124,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 trans = response.data.transaction
                 return {
                     "id": trans.id,
-                    "date": trans.date,
+                    "date": trans.var_date.isoformat() if trans.var_date else None,
                     "amount": trans.amount,
                     "amount_formatted": f"${trans.amount / 1000:.2f}",
                     "memo": trans.memo,
@@ -142,6 +147,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def create_transaction(
         account_id: str,
         amount: int,
@@ -214,7 +220,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     trans = response.data.transaction
                     return {
                         "id": trans.id,
-                        "date": trans.date,
+                        "date": trans.var_date.isoformat() if trans.var_date else None,
                         "amount": trans.amount,
                         "amount_formatted": f"${trans.amount / 1000:.2f}",
                         "payee_name": trans.payee_name,
@@ -231,6 +237,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def update_transaction(
         transaction_id: str,
         account_id: Optional[str] = None,
@@ -306,7 +313,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 trans = response.data.transaction
                 return {
                     "id": trans.id,
-                    "date": trans.date,
+                    "date": trans.var_date.isoformat() if trans.var_date else None,
                     "amount": trans.amount,
                     "amount_formatted": f"${trans.amount / 1000:.2f}",
                     "payee_name": trans.payee_name,
@@ -321,6 +328,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def delete_transaction(
         transaction_id: str,
         budget_id: str = "default"
@@ -356,6 +364,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def import_transactions(
         budget_id: str = "default"
     ) -> Dict[str, Any]:

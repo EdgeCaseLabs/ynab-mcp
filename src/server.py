@@ -3,7 +3,8 @@ YNAB MCP Server - Main server implementation
 """
 import os
 import logging
-from typing import Optional, Dict
+import argparse
+from typing import Optional
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 import ynab
@@ -35,6 +36,8 @@ mcp = FastMCP(os.getenv("MCP_SERVER_NAME", "YNAB MCP Server"))
 
 # Global YNAB client
 ynab_client: Optional[ApiClient] = None
+
+
 
 
 def get_ynab_client() -> ApiClient:
@@ -87,12 +90,29 @@ def register_tools():
         logger.error(f"Failed to register tools: {e}")
         raise
 
+def setup_debug_logging(enabled: bool):
+    """Setup debug logging based on command line flag"""
+    from debug_utils import set_logging_enabled
+    set_logging_enabled(enabled)
+    if enabled:
+        logger.info("Debug tool call logging enabled via @log_tool_call decorator")
+    else:
+        logger.info("Debug tool call logging disabled")
+
 # Initialize tools on startup
 register_tools()
 
 
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="YNAB MCP Server")
+    parser.add_argument("--logging", action="store_true", help="Enable debug logging for tool calls")
+    args = parser.parse_args()
+    
+    # Setup debug logging based on flag
+    setup_debug_logging(args.logging)
+    
     # Run the server in STDIO mode for Claude Desktop
     try:
         logger.info("Starting YNAB MCP server with STDIO transport")

@@ -10,10 +10,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import the logging decorator
+from debug_utils import log_tool_call
+
 def register_tools(mcp: FastMCP, get_client_func):
     """Register budget-related tools with the MCP server"""
     
     @mcp.tool()
+    @log_tool_call
     def get_budgets(include_accounts: bool = False) -> Dict[str, Any]:
         """
         Get list of budgets for the authenticated user.
@@ -73,6 +77,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_budget_by_id(
         budget_id: str,
         last_knowledge_of_server: Optional[int] = None
@@ -181,6 +186,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_budget_settings(budget_id: str) -> Dict[str, Any]:
         """
         Get settings for a specific budget.

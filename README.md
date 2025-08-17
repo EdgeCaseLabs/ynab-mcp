@@ -8,6 +8,7 @@ A Model Context Protocol (MCP) server that provides comprehensive access to the 
 - **uv Integration**: Fast dependency management with uv
 - **Type-Safe**: Built with Python type hints and Pydantic models
 - **Error Handling**: Comprehensive error handling and logging
+- **Debug Logging**: Optional tool call logging for debugging MCP interactions
 - **Environment Configuration**: Simple configuration via environment variables
 - **Organized Tool Structure**: Tools are logically grouped by category (budgets, accounts, transactions, etc.)
 
@@ -50,7 +51,11 @@ cp .env.sample .env
 
 5. Test the server:
 ```bash
+# Run normally
 uv run src/server.py
+
+# Run with debug logging enabled (logs all tool calls)
+uv run src/server.py --logging
 ```
 
 ## Configuration
@@ -76,7 +81,7 @@ uv run src/server.py
 - `get_budget_settings(budget_id)` - Get budget settings
 
 ### Account Tools
-- `get_accounts(budget_id, last_knowledge_of_server)` - Get all accounts
+- `get_accounts(budget_id, last_knowledge_of_server, include_closed, include_deleted)` - Get accounts (excludes closed/deleted by default)
 - `get_account_by_id(account_id, budget_id)` - Get specific account
 - `create_account(name, type, balance, budget_id)` - Create new account
 - `get_account_balance(account_id, budget_id)` - Get account balance
@@ -134,6 +139,11 @@ Add the YNAB MCP server configuration (see `claude_desktop_config.json` for a co
     }
   }
 }
+```
+
+To enable debug logging in Claude Desktop, add `"--logging"` to the args array:
+```json
+"args": ["run", "--directory", "/absolute/path/to/ynab-mcp", "src/server.py", "--logging"]
 ```
 
 **Important**: 
@@ -227,6 +237,7 @@ To add new tools, create or modify files in `src/tools/` and register them in `s
 ynab-mcp/
 ├── src/
 │   ├── server.py           # Main MCP server
+│   ├── debug_utils.py      # Debug logging utilities
 │   └── tools/              # Tool implementations
 │       ├── budgets.py      # Budget-related tools
 │       ├── accounts.py     # Account tools
@@ -237,8 +248,30 @@ ynab-mcp/
 ├── pyproject.toml          # uv dependencies
 ├── uv.lock                 # Locked dependencies
 ├── claude_desktop_config.json # Sample Claude Desktop config
+├── CLAUDE.md               # Development guide for Claude Code
 └── .env.sample            # Environment template
 ```
+
+## Debugging
+
+### Debug Logging
+
+The server supports debug logging to help troubleshoot MCP tool calls:
+
+```bash
+# Enable debug logging
+uv run src/server.py --logging
+```
+
+When enabled, all tool calls are logged to stderr in the format:
+```
+TOOL_CALL: function_name(param1='value', param2=42)
+```
+
+This is especially useful when:
+- Debugging Claude Desktop integration issues
+- Understanding which tools are being called with what parameters
+- Troubleshooting unexpected tool behavior
 
 ## Troubleshooting
 

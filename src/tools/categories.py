@@ -11,6 +11,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import the logging decorator
+from debug_utils import log_tool_call
+
 def register_tools(mcp: FastMCP, get_client_func):
     """Register category-related tools with the MCP server"""
     
@@ -24,6 +27,7 @@ def register_tools(mcp: FastMCP, get_client_func):
         return budget_id
     
     @mcp.tool()
+    @log_tool_call
     def get_categories(
         budget_id: str = "default",
         last_knowledge_of_server: Optional[int] = None
@@ -90,6 +94,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_category_by_id(
         category_id: str,
         budget_id: str = "default"
@@ -140,6 +145,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_month_category(
         category_id: str,
         month: str,
@@ -192,6 +198,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def update_category(
         category_id: str,
         name: Optional[str] = None,
@@ -255,6 +262,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def update_month_category(
         category_id: str,
         month: str,
@@ -307,6 +315,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_category_balance(
         category_id: str,
         month: Optional[str] = None,

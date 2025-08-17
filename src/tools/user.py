@@ -9,10 +9,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import the logging decorator
+from debug_utils import log_tool_call
+
 def register_tools(mcp: FastMCP, get_client_func):
     """Register user-related tools with the MCP server"""
     
     @mcp.tool()
+    @log_tool_call
     def get_user() -> Dict[str, Any]:
         """
         Get authenticated user information.
@@ -36,6 +40,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def verify_api_key() -> Dict[str, Any]:
         """
         Verify that the YNAB API key is valid and working.

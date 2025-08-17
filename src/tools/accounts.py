@@ -11,6 +11,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import the logging decorator
+from debug_utils import log_tool_call
+
+
 def register_tools(mcp: FastMCP, get_client_func):
     """Register account-related tools with the MCP server"""
     
@@ -24,19 +28,24 @@ def register_tools(mcp: FastMCP, get_client_func):
         return budget_id
     
     @mcp.tool()
+    @log_tool_call
     def get_accounts(
         budget_id: str = "default",
-        last_knowledge_of_server: Optional[int] = None
+        last_knowledge_of_server: Optional[int] = None,
+        include_closed: bool = False,
+        include_deleted: bool = False
     ) -> Dict[str, Any]:
         """
-        Get all accounts for a budget.
+        Get accounts for a budget with optional filtering.
         
         Args:
             budget_id: Budget ID, 'last-used', or 'default' (uses DEFAULT_BUDGET_ID env var)
             last_knowledge_of_server: The starting server knowledge for delta requests
+            include_closed: Whether to include closed accounts (default: False)
+            include_deleted: Whether to include deleted accounts (default: False)
             
         Returns:
-            List of accounts with their details
+            List of accounts with their details, filtered by the specified criteria
         """
         try:
             budget_id = get_budget_id(budget_id)
@@ -50,6 +59,14 @@ def register_tools(mcp: FastMCP, get_client_func):
                 
                 accounts_list = []
                 for account in response.data.accounts:
+                    # Filter out closed accounts unless explicitly requested
+                    if account.closed and not include_closed:
+                        continue
+                    
+                    # Filter out deleted accounts unless explicitly requested
+                    if account.deleted and not include_deleted:
+                        continue
+                    
                     accounts_list.append({
                         "id": account.id,
                         "name": account.name,
@@ -75,6 +92,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_account_by_id(
         account_id: str,
         budget_id: str = "default"
@@ -120,6 +138,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def create_account(
         name: str,
         type: str,
@@ -188,6 +207,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_account_balance(
         account_id: str,
         budget_id: str = "default"

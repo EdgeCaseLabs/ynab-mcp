@@ -11,6 +11,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import the logging decorator
+from debug_utils import log_tool_call
+
 def register_tools(mcp: FastMCP, get_client_func):
     """Register payee-related tools with the MCP server"""
     
@@ -24,6 +27,7 @@ def register_tools(mcp: FastMCP, get_client_func):
         return budget_id
     
     @mcp.tool()
+    @log_tool_call
     def get_payees(
         budget_id: str = "default",
         last_knowledge_of_server: Optional[int] = None
@@ -66,6 +70,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_payee_by_id(
         payee_id: str,
         budget_id: str = "default"
@@ -102,6 +107,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def update_payee(
         payee_id: str,
         name: str,
@@ -146,6 +152,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_payee_locations(
         budget_id: str = "default"
     ) -> Dict[str, Any]:
@@ -181,6 +188,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_payee_location_by_id(
         payee_location_id: str,
         budget_id: str = "default"
@@ -218,6 +226,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def get_payee_locations_by_payee(
         payee_id: str,
         budget_id: str = "default"
@@ -261,6 +270,7 @@ def register_tools(mcp: FastMCP, get_client_func):
             return {"error": str(e)}
     
     @mcp.tool()
+    @log_tool_call
     def search_payees(
         search_term: str,
         budget_id: str = "default"
