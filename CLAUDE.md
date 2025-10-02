@@ -6,11 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Running the Server
 ```bash
-# Standard mode (no debug logging)
-uv run src/server.py
+# From PyPI installation
+ynab-mcp-server
+ynab-mcp-server --logging  # With debug logging
 
-# With debug logging enabled
-uv run src/server.py --logging
+# From source
+uv run python -m ynab_mcp_server
+uv run python -m ynab_mcp_server --logging  # With debug logging
+
+# Direct with uvx (no installation needed)
+uvx ynab-mcp-server
 ```
 
 ### Development Tools
@@ -18,13 +23,20 @@ uv run src/server.py --logging
 # Install dependencies
 uv sync
 
+# Build package
+uv build
+
 # Run tests
 uv run pytest
 
 # Code formatting and linting
-uv run black src/
-uv run ruff src/
-uv run mypy src/
+uv run black ynab_mcp_server/
+uv run ruff ynab_mcp_server/
+uv run mypy ynab_mcp_server/
+
+# Test package installation locally
+uv pip install -e .
+python -m ynab_mcp_server --help
 ```
 
 ### Environment Setup
@@ -37,7 +49,7 @@ This is a **Model Context Protocol (MCP) server** that exposes the YNAB (You Nee
 
 ### Core Architecture Concepts
 
-**Server Structure**: Uses FastMCP framework with a modular tool registration system. The main server (`src/server.py`) imports and registers tool modules from `src/tools/`, each containing domain-specific YNAB API operations.
+**Server Structure**: Uses FastMCP framework with a modular tool registration system. The main server (`ynab_mcp_server/server.py`) imports and registers tool modules from `ynab_mcp_server/tools/`, each containing domain-specific YNAB API operations. The package is structured for PyPI distribution with entry points.
 
 **Tool Organization**: Tools are grouped by YNAB domain:
 - `budgets.py` - Budget management (3 tools)
@@ -51,7 +63,7 @@ This is a **Model Context Protocol (MCP) server** that exposes the YNAB (You Nee
 
 **Budget ID Resolution**: All tools use a common pattern where `budget_id="default"` resolves to `DEFAULT_BUDGET_ID` environment variable or falls back to `"last-used"`.
 
-**Debug Logging System**: Tools are decorated with `@log_tool_call` which conditionally logs function calls in format `TOOL_CALL: function_name(param1='value', param2=42)` to stderr when enabled via `--logging` flag.
+**Debug Logging System**: Tools are decorated with `@log_tool_call` which conditionally logs function calls in format `TOOL_CALL: function_name(param1='value', param2=42)` to stderr when enabled via `--logging` flag. Debug utilities are in `debug_utils.py` module.
 
 ### Key Implementation Patterns
 

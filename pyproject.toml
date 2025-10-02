@@ -1,18 +1,39 @@
 [project]
-name = "ynab-mcp"
+name = "ynab-mcp-server"
 version = "0.1.0"
 description = "Model Context Protocol server for YNAB (You Need A Budget) API integration"
 authors = [
     {name = "Wes Thomas", email = "westhomas@edgecaselabs.com"}
 ]
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.10"
+keywords = ["ynab", "mcp", "ai", "claude", "budget", "api"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Office/Business :: Financial :: Accounting"
+]
 dependencies = [
     "mcp>=1.0.0",
     "ynab>=1.8.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0"
 ]
+
+[project.urls]
+Homepage = "https://github.com/EdgeCaseLabs/ynab-mcp"
+Repository = "https://github.com/EdgeCaseLabs/ynab-mcp"
+Issues = "https://github.com/EdgeCaseLabs/ynab-mcp/issues"
+
+[project.scripts]
+ynab-mcp-server = "ynab_mcp_server.__main__:main"
 
 [project.optional-dependencies]
 dev = [
@@ -28,12 +49,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["ynab_mcp_server"]
 
 [tool.black]
 line-length = 100
 target-version = ['py310']
+include = 'ynab_mcp_server/.*\.py$'
 
 [tool.ruff]
 line-length = 100
 select = ["E", "F", "I", "N", "W"]
+include = ["ynab_mcp_server/**/*.py"]

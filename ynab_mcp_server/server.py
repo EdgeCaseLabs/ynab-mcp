@@ -12,7 +12,7 @@ from ynab.api_client import ApiClient
 from ynab.configuration import Configuration
 
 # Import tool modules
-from tools import (
+from .tools import (
     budgets,
     accounts,
     transactions,
@@ -92,7 +92,7 @@ def register_tools():
 
 def setup_debug_logging(enabled: bool):
     """Setup debug logging based on command line flag"""
-    from debug_utils import set_logging_enabled
+    from .debug_utils import set_logging_enabled
     set_logging_enabled(enabled)
     if enabled:
         logger.info("Debug tool call logging enabled via @log_tool_call decorator")

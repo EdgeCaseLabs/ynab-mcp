@@ -27,35 +27,60 @@ A Model Context Protocol (MCP) server that provides comprehensive access to the 
 
 ## Installation
 
+### Quick Install (Recommended)
+
+If you have `uv` installed, you can run the server directly without cloning:
+
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Run the server directly from PyPI
+uvx ynab-mcp-server
+
+# Or with debug logging
+uvx ynab-mcp-server --logging
+```
+
+### Install from PyPI
+
+```bash
+# Using pip
+pip install ynab-mcp-server
+
+# Or using uv
+uv pip install ynab-mcp-server
+
+# Run the server
+ynab-mcp-server
+```
+
+### Install from Source
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/EdgeCaseLabs/ynab-mcp.git
 cd ynab-mcp
 ```
 
-2. Install uv if you haven't already:
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-3. Install dependencies:
+2. Install dependencies:
 ```bash
 uv sync
 ```
 
-4. Copy and configure environment:
+3. Copy and configure environment:
 ```bash
 cp .env.sample .env
 # Edit .env with your YNAB API key
 ```
 
-5. Test the server:
+4. Test the server:
 ```bash
 # Run normally
-uv run src/server.py
+uv run python -m ynab_mcp_server
 
-# Run with debug logging enabled (logs all tool calls)
-uv run src/server.py --logging
+# Run with debug logging enabled
+uv run python -m ynab_mcp_server --logging
 ```
 
 ## Configuration
@@ -130,8 +155,8 @@ Add the YNAB MCP server configuration (see `claude_desktop_config.json` for a co
 {
   "mcpServers": {
     "ynab": {
-      "command": "/path/to/uv",
-      "args": ["run", "--directory", "/absolute/path/to/ynab-mcp", "src/server.py"],
+      "command": "uvx",
+      "args": ["ynab-mcp-server"],
       "env": {
         "YNAB_API_KEY": "your_ynab_api_key_here",
         "DEFAULT_BUDGET_ID": "optional_default_budget_id"
@@ -141,9 +166,27 @@ Add the YNAB MCP server configuration (see `claude_desktop_config.json` for a co
 }
 ```
 
-To enable debug logging in Claude Desktop, add `"--logging"` to the args array:
+**Alternative configurations:**
+
+If you installed from source:
 ```json
-"args": ["run", "--directory", "/absolute/path/to/ynab-mcp", "src/server.py", "--logging"]
+{
+  "mcpServers": {
+    "ynab": {
+      "command": "/path/to/uv",
+      "args": ["run", "--directory", "/absolute/path/to/ynab-mcp", "python", "-m", "ynab_mcp_server"],
+      "env": {
+        "YNAB_API_KEY": "your_ynab_api_key_here",
+        "DEFAULT_BUDGET_ID": "optional_default_budget_id"
+      }
+    }
+  }
+}
+```
+
+To enable debug logging, add `"--logging"` to the args array:
+```json
+"args": ["ynab-mcp-server", "--logging"]
 ```
 
 **Important**: 
@@ -213,18 +256,18 @@ uv run pytest
 ### Linting and Formatting
 ```bash
 # Format code
-uv run black src/
+uv run black ynab_mcp_server/
 
 # Lint code
-uv run ruff src/
+uv run ruff ynab_mcp_server/
 
 # Type checking
-uv run mypy src/
+uv run mypy ynab_mcp_server/
 ```
 
 ### Adding New Tools
 
-To add new tools, create or modify files in `src/tools/` and register them in `src/server.py`:
+To add new tools, create or modify files in `ynab_mcp_server/tools/` and register them in `ynab_mcp_server/server.py`:
 
 1. Create tool function with MCP decorator
 2. Add comprehensive docstring
@@ -235,7 +278,9 @@ To add new tools, create or modify files in `src/tools/` and register them in `s
 
 ```
 ynab-mcp/
-├── src/
+├── ynab_mcp_server/        # Main package
+│   ├── __init__.py         # Package initialization
+│   ├── __main__.py         # Module entry point
 │   ├── server.py           # Main MCP server
 │   ├── debug_utils.py      # Debug logging utilities
 │   └── tools/              # Tool implementations
@@ -259,8 +304,14 @@ ynab-mcp/
 The server supports debug logging to help troubleshoot MCP tool calls:
 
 ```bash
-# Enable debug logging
-uv run src/server.py --logging
+# Enable debug logging (if installed from PyPI)
+ynab-mcp-server --logging
+
+# Or using uvx
+uvx ynab-mcp-server --logging
+
+# Or from source
+uv run python -m ynab_mcp_server --logging
 ```
 
 When enabled, all tool calls are logged to stderr in the format:

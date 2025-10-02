@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Import the logging decorator
-from debug_utils import log_tool_call
+from ..debug_utils import log_tool_call
 
 def register_tools(mcp: FastMCP, get_client_func):
     """Register budget-related tools with the MCP server"""
