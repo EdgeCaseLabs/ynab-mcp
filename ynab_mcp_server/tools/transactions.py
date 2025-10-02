@@ -8,10 +8,11 @@ from mcp.server.fastmcp import FastMCP
 import ynab
 from ynab.api import transactions_api
 from ynab.models import (
-    PostTransactionsWrapper, 
+    PostTransactionsWrapper,
     SaveTransactionWithOptionalFields,
     PutTransactionWrapper,
-    PatchTransactionsWrapper
+    PatchTransactionsWrapper,
+    ExistingTransaction
 )
 import logging
 
@@ -277,15 +278,16 @@ def register_tools(mcp: FastMCP, get_client_func):
             
             with get_client_func() as api_client:
                 api = transactions_api.TransactionsApi(api_client)
-                
+
                 # Create update data with only provided fields
+                # Note: ExistingTransaction uses 'var_date' not 'date'
                 update_data = {}
                 if account_id is not None:
                     update_data["account_id"] = account_id
                 if amount is not None:
                     update_data["amount"] = amount
                 if date is not None:
-                    update_data["date"] = date
+                    update_data["var_date"] = date
                 if payee_name is not None:
                     update_data["payee_name"] = payee_name
                 if payee_id is not None:
@@ -300,8 +302,8 @@ def register_tools(mcp: FastMCP, get_client_func):
                     update_data["memo"] = memo
                 if flag_color is not None:
                     update_data["flag_color"] = flag_color
-                
-                transaction_data = SaveTransactionWithOptionalFields(**update_data)
+
+                transaction_data = ExistingTransaction(**update_data)
                 wrapper = PutTransactionWrapper(transaction=transaction_data)
                 
                 response = api.update_transaction(
