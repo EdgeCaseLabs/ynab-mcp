@@ -41,7 +41,7 @@ def main():
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")
     except Exception as e:
-        logger.error(f"Server error: {e}")
+        logger.exception(f"Server error: {e}")
         raise
 
 

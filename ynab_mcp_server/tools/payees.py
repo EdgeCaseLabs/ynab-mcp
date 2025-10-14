@@ -66,7 +66,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "server_knowledge": response.data.server_knowledge
                 }
         except Exception as e:
-            logger.error(f"Error getting payees: {e}")
+            logger.exception(f"Error getting payees: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -103,7 +103,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "deleted": payee.deleted
                 }
         except Exception as e:
-            logger.error(f"Error getting payee {payee_id}: {e}")
+            logger.exception(f"Error getting payee {payee_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -148,7 +148,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": "Payee updated successfully"
                 }
         except Exception as e:
-            logger.error(f"Error updating payee {payee_id}: {e}")
+            logger.exception(f"Error updating payee {payee_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -184,7 +184,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 
                 return {"payee_locations": locations_list}
         except Exception as e:
-            logger.error(f"Error getting payee locations: {e}")
+            logger.exception(f"Error getting payee locations: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -222,7 +222,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "deleted": location.deleted
                 }
         except Exception as e:
-            logger.error(f"Error getting payee location {payee_location_id}: {e}")
+            logger.exception(f"Error getting payee location {payee_location_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -266,7 +266,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "locations": locations_list
                 }
         except Exception as e:
-            logger.error(f"Error getting locations for payee {payee_id}: {e}")
+            logger.exception(f"Error getting locations for payee {payee_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -311,5 +311,5 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "count": len(matching_payees)
                 }
         except Exception as e:
-            logger.error(f"Error searching payees: {e}")
+            logger.exception(f"Error searching payees: {e}")
             return {"error": str(e)}

@@ -87,7 +87,7 @@ def register_tools():
         
         logger.info("All YNAB tools registered successfully")
     except Exception as e:
-        logger.error(f"Failed to register tools: {e}")
+        logger.exception(f"Failed to register tools: {e}")
         raise
 
 def setup_debug_logging(enabled: bool):
@@ -120,5 +120,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")
     except Exception as e:
-        logger.error(f"Server error: {e}")
+        logger.exception(f"Server error: {e}")
         raise

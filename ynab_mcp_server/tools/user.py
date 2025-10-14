@@ -36,7 +36,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": "User information retrieved successfully"
                 }
         except Exception as e:
-            logger.error(f"Error getting user information: {e}")
+            logger.exception(f"Error getting user information: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -60,7 +60,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": "API key is valid and authenticated"
                 }
         except Exception as e:
-            logger.error(f"API key verification failed: {e}")
+            logger.exception(f"API key verification failed: {e}")
             return {
                 "valid": False,
                 "error": str(e),

@@ -88,7 +88,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "server_knowledge": response.data.server_knowledge
                 }
         except Exception as e:
-            logger.error(f"Error getting accounts: {e}")
+            logger.exception(f"Error getting accounts: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -134,7 +134,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "deleted": account.deleted
                 }
         except Exception as e:
-            logger.error(f"Error getting account {account_id}: {e}")
+            logger.exception(f"Error getting account {account_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -203,7 +203,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": "Account created successfully"
                 }
         except Exception as e:
-            logger.error(f"Error creating account: {e}")
+            logger.exception(f"Error creating account: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -243,5 +243,5 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "uncleared_balance_formatted": f"${account.uncleared_balance / 1000:.2f}"
                 }
         except Exception as e:
-            logger.error(f"Error getting account balance for {account_id}: {e}")
+            logger.exception(f"Error getting account balance for {account_id}: {e}")
             return {"error": str(e)}

@@ -90,7 +90,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "server_knowledge": response.data.server_knowledge
                 }
         except Exception as e:
-            logger.error(f"Error getting categories: {e}")
+            logger.exception(f"Error getting categories: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -141,7 +141,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "deleted": cat.deleted
                 }
         except Exception as e:
-            logger.error(f"Error getting category {category_id}: {e}")
+            logger.exception(f"Error getting category {category_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -194,7 +194,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "deleted": cat.deleted
                 }
         except Exception as e:
-            logger.error(f"Error getting month category {category_id} for {month}: {e}")
+            logger.exception(f"Error getting month category {category_id} for {month}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -258,7 +258,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": "Category updated successfully"
                 }
         except Exception as e:
-            logger.error(f"Error updating category {category_id}: {e}")
+            logger.exception(f"Error updating category {category_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -311,7 +311,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": f"Category budget updated for {month}"
                 }
         except Exception as e:
-            logger.error(f"Error updating month category {category_id} for {month}: {e}")
+            logger.exception(f"Error updating month category {category_id} for {month}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -364,5 +364,5 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "available_formatted": f"${cat.balance / 1000:.2f}"
                 }
         except Exception as e:
-            logger.error(f"Error getting category balance for {category_id}: {e}")
+            logger.exception(f"Error getting category balance for {category_id}: {e}")
             return {"error": str(e)}

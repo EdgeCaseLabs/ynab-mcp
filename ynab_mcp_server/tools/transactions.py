@@ -93,7 +93,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "server_knowledge": response.data.server_knowledge
                 }
         except Exception as e:
-            logger.error(f"Error getting transactions: {e}")
+            logger.exception(f"Error getting transactions: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -144,7 +144,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "subtransactions": trans.subtransactions
                 }
         except Exception as e:
-            logger.error(f"Error getting transaction {transaction_id}: {e}")
+            logger.exception(f"Error getting transaction {transaction_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -234,7 +234,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 else:
                     return {"message": "Transaction created", "duplicate_import_ids": response.data.duplicate_import_ids}
         except Exception as e:
-            logger.error(f"Error creating transaction: {e}")
+            logger.exception(f"Error creating transaction: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -326,7 +326,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": "Transaction updated successfully"
                 }
         except Exception as e:
-            logger.error(f"Error updating transaction {transaction_id}: {e}")
+            logger.exception(f"Error updating transaction {transaction_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -362,7 +362,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": f"Transaction {trans.id} deleted successfully"
                 }
         except Exception as e:
-            logger.error(f"Error deleting transaction {transaction_id}: {e}")
+            logger.exception(f"Error deleting transaction {transaction_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -392,5 +392,5 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "message": f"Imported {len(response.data.transaction_ids) if response.data.transaction_ids else 0} transactions"
                 }
         except Exception as e:
-            logger.error(f"Error importing transactions: {e}")
+            logger.exception(f"Error importing transactions: {e}")
             return {"error": str(e)}

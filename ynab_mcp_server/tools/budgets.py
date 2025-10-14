@@ -73,7 +73,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                     "default_budget": response.data.default_budget.id if response.data.default_budget else None
                 }
         except Exception as e:
-            logger.error(f"Error getting budgets: {e}")
+            logger.exception(f"Error getting budgets: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -182,7 +182,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 
                 return budget_dict
         except Exception as e:
-            logger.error(f"Error getting budget {budget_id}: {e}")
+            logger.exception(f"Error getting budget {budget_id}: {e}")
             return {"error": str(e)}
     
     @mcp.tool()
@@ -226,5 +226,5 @@ def register_tools(mcp: FastMCP, get_client_func):
                     } if settings.currency_format else None
                 }
         except Exception as e:
-            logger.error(f"Error getting budget settings for {budget_id}: {e}")
+            logger.exception(f"Error getting budget settings for {budget_id}: {e}")
             return {"error": str(e)}
