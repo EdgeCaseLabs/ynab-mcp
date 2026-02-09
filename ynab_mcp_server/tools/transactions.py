@@ -2,7 +2,7 @@
 Transaction-related MCP tools for YNAB
 """
 import os
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any, Dict
 from datetime import date, datetime
 from mcp.server.fastmcp import FastMCP
 import ynab
@@ -11,8 +11,7 @@ from ynab.models import (
     PostTransactionsWrapper,
     SaveTransactionWithOptionalFields,
     PutTransactionWrapper,
-    PatchTransactionsWrapper,
-    ExistingTransaction
+    ExistingTransaction,
 )
 import logging
 

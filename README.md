@@ -138,6 +138,25 @@ uv run python -m ynab_mcp_server --logging
 
 ## Usage Examples
 
+### Claude Code Plugin (Recommended)
+
+The easiest way to use this with Claude Code is to install it as a plugin:
+
+```bash
+# Option 1: Install from local directory
+cd /path/to/ynab-mcp
+uv sync
+cp .env.sample .env
+# Edit .env with your YNAB API key
+claude plugin install .
+
+# Option 2: Install from GitHub (once published)
+claude plugin install https://github.com/EdgeCaseLabs/ynab-mcp.git
+# Then create .env file in ~/.claude/plugins/repos/ynab/
+```
+
+After installation, the YNAB tools will be automatically available in all your Claude Code sessions. See [.claude-plugin/README.md](.claude-plugin/README.md) for more details.
+
 ### Claude Desktop Configuration
 
 To connect this YNAB MCP server to Claude Desktop, you need to configure it in your Claude Desktop settings.

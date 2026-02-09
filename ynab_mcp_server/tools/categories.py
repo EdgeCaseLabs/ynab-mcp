@@ -204,27 +204,29 @@ def register_tools(mcp: FastMCP, get_client_func):
         name: Optional[str] = None,
         note: Optional[str] = None,
         hidden: Optional[bool] = None,
+        goal_target: Optional[int] = None,
         budget_id: str = "default"
     ) -> Dict[str, Any]:
         """
         Update a category.
-        
+
         Args:
             category_id: The category ID to update
             name: New category name
             note: New note for the category
             hidden: Whether the category is hidden
+            goal_target: Target amount for the category goal in milliunits (e.g., $500 = 500000)
             budget_id: Budget ID, 'last-used', or 'default'
-            
+
         Returns:
             Updated category details
         """
         try:
             budget_id = get_budget_id(budget_id)
-            
+
             with get_client_func() as api_client:
                 api = categories_api.CategoriesApi(api_client)
-                
+
                 # Create update data
                 update_data = {}
                 if name is not None:
@@ -233,7 +235,9 @@ def register_tools(mcp: FastMCP, get_client_func):
                     update_data["note"] = note
                 if hidden is not None:
                     update_data["hidden"] = hidden
-                
+                if goal_target is not None:
+                    update_data["goal_target"] = goal_target
+
                 category_data = SaveCategory(**update_data)
                 wrapper = PatchCategoryWrapper(category=category_data)
                 
