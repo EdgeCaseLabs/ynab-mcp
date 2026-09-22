@@ -9,7 +9,7 @@ import ynab
 from ynab.api import transactions_api
 from ynab.models import (
     PostTransactionsWrapper,
-    SaveTransactionWithOptionalFields,
+    NewTransaction,
     PutTransactionWrapper,
     ExistingTransaction,
 )
@@ -19,6 +19,54 @@ logger = logging.getLogger(__name__)
 
 # Import the logging decorator
 from ..debug_utils import log_tool_call
+
+
+def _parse_iso_date(value: Optional[str]) -> Optional[date]:
+    """Parse a YYYY-MM-DD string to a date, or None if blank/invalid."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def _serialize_transaction(trans) -> Dict[str, Any]:
+    """Trim a transaction to non-null fields to keep payloads small.
+
+    Subtransactions are flattened to amount/category/memo instead of full
+    nested objects, which were the bulk of oversized responses.
+    """
+    out = {
+        "id": trans.id,
+        "date": trans.var_date.isoformat() if trans.var_date else None,
+        "amount": trans.amount,
+        "amount_formatted": f"${trans.amount / 1000:.2f}",
+        "payee_name": trans.payee_name,
+        "category_name": trans.category_name,
+        "memo": trans.memo,
+        "cleared": trans.cleared,
+        "approved": trans.approved,
+        "flag_color": trans.flag_color,
+        "account_name": trans.account_name,
+        "category_id": trans.category_id,
+        "transfer_account_id": trans.transfer_account_id,
+        "deleted": trans.deleted,
+    }
+    subs = getattr(trans, "subtransactions", None)
+    if subs:
+        out["subtransactions"] = [
+            {
+                "amount": s.amount,
+                "amount_formatted": f"${s.amount / 1000:.2f}",
+                "category_name": getattr(s, "category_name", None),
+                "memo": s.memo,
+            }
+            for s in subs
+        ]
+    # Drop null/false-empty fields to shrink the payload.
+    return {k: v for k, v in out.items() if v not in (None, False)}
+
 
 def register_tools(mcp: FastMCP, get_client_func):
     """Register transaction-related tools with the MCP server"""
@@ -37,58 +85,91 @@ def register_tools(mcp: FastMCP, get_client_func):
     def get_transactions(
         budget_id: str = "default",
         since_date: Optional[str] = None,
+        until_date: Optional[str] = None,
+        category_id: Optional[str] = None,
         type: Optional[str] = None,
+        summary: bool = False,
+        include_deleted: bool = False,
         last_knowledge_of_server: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Get transactions for a budget.
-        
+        Get transactions for a budget, with date-window, category, and summary
+        filters to keep responses small.
+
         Args:
             budget_id: Budget ID, 'last-used', or 'default'
-            since_date: Filter transactions on or after this date (ISO format: YYYY-MM-DD)
+            since_date: Include transactions on or after this date (YYYY-MM-DD).
+                Sent to YNAB as a server-side floor.
+            until_date: Include transactions on or before this date (YYYY-MM-DD).
+                Applied client-side (the YNAB API has no end-date param), so
+                combined with since_date this slices to a single window/month.
+            category_id: If set, only transactions in this category are returned
+                (server-side filter via the by-category endpoint). Greatly
+                reduces payload size when tallying a single category.
             type: Filter by type: 'uncategorized' or 'unapproved'
+            summary: If True, return only aggregate totals (count, inflow,
+                outflow, net) instead of the full transaction list. Use this to
+                tally a category/window without hitting size limits.
+            include_deleted: Include deleted transactions (default False).
             last_knowledge_of_server: The starting server knowledge for delta requests
-            
+
         Returns:
-            List of transactions
+            Either a list of (trimmed) transactions, or aggregate totals when
+            summary=True.
         """
         try:
             budget_id = get_budget_id(budget_id)
-            
+
+            until = _parse_iso_date(until_date)
+            if until_date and until is None:
+                return {"error": f"Invalid until_date: {until_date}. Use YYYY-MM-DD format."}
+
             with get_client_func() as api_client:
                 api = transactions_api.TransactionsApi(api_client)
-                response = api.get_transactions(
-                    budget_id=budget_id,
-                    since_date=since_date,
-                    type=type,
-                    last_knowledge_of_server=last_knowledge_of_server
-                )
-                
+                if category_id:
+                    response = api.get_transactions_by_category(
+                        budget_id=budget_id,
+                        category_id=category_id,
+                        since_date=since_date,
+                        type=type,
+                        last_knowledge_of_server=last_knowledge_of_server
+                    )
+                else:
+                    response = api.get_transactions(
+                        budget_id=budget_id,
+                        since_date=since_date,
+                        type=type,
+                        last_knowledge_of_server=last_knowledge_of_server
+                    )
+
                 transactions_list = []
                 for trans in response.data.transactions:
-                    transactions_list.append({
-                        "id": trans.id,
-                        "date": trans.var_date.isoformat() if trans.var_date else None,
-                        "amount": trans.amount,
-                        "amount_formatted": f"${trans.amount / 1000:.2f}",
-                        "memo": trans.memo,
-                        "cleared": trans.cleared,
-                        "approved": trans.approved,
-                        "flag_color": trans.flag_color,
-                        "account_id": trans.account_id,
-                        "account_name": trans.account_name,
-                        "payee_id": trans.payee_id,
-                        "payee_name": trans.payee_name,
-                        "category_id": trans.category_id,
-                        "category_name": trans.category_name,
-                        "transfer_account_id": trans.transfer_account_id,
-                        "import_id": trans.import_id,
-                        "deleted": trans.deleted,
-                        "subtransactions": trans.subtransactions
-                    })
-                
+                    if trans.deleted and not include_deleted:
+                        continue
+                    if until is not None and trans.var_date and trans.var_date > until:
+                        continue
+                    transactions_list.append(_serialize_transaction(trans))
+
+                if summary:
+                    inflow = sum(t["amount"] for t in transactions_list if t["amount"] > 0)
+                    outflow = sum(t["amount"] for t in transactions_list if t["amount"] < 0)
+                    return {
+                        "count": len(transactions_list),
+                        "since_date": since_date,
+                        "until_date": until_date,
+                        "category_id": category_id,
+                        "inflow": inflow,
+                        "inflow_formatted": f"${inflow / 1000:.2f}",
+                        "outflow": outflow,
+                        "outflow_formatted": f"${outflow / 1000:.2f}",
+                        "net": inflow + outflow,
+                        "net_formatted": f"${(inflow + outflow) / 1000:.2f}",
+                        "server_knowledge": response.data.server_knowledge
+                    }
+
                 return {
                     "transactions": transactions_list,
+                    "count": len(transactions_list),
                     "server_knowledge": response.data.server_knowledge
                 }
         except Exception as e:
@@ -196,7 +277,7 @@ def register_tools(mcp: FastMCP, get_client_func):
                 api = transactions_api.TransactionsApi(api_client)
                 
                 # Create transaction data
-                transaction_data = SaveTransactionWithOptionalFields(
+                transaction_data = NewTransaction(
                     account_id=account_id,
                     amount=amount,
                     date=date,
