@@ -27,7 +27,17 @@ A Model Context Protocol (MCP) server that provides comprehensive access to the 
 
 ## Installation
 
-### Quick Install (Recommended)
+> **Reconciling with Amazon purchases?** If you're using this alongside the
+> Amazon Transaction Scraper and the `amazon-ynab-correlator` skill, follow the
+> combined end-to-end guide in the scraper's `SETUP.md` instead — it covers
+> installing and wiring both MCP servers into Claude Desktop.
+
+> **Which install method?** Prefer **Install from Source** below. It uses the
+> pinned SDK version (`uv.lock`) this server is tested against. The PyPI/`uvx`
+> builds may lag behind and can break tools such as `create_transaction` when
+> the upstream YNAB SDK renames models.
+
+### Quick Install
 
 If you have `uv` installed, you can run the server directly without cloning:
 
