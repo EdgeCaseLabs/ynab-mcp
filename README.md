@@ -1,407 +1,167 @@
 # YNAB MCP Server
 
-A Model Context Protocol (MCP) server that provides comprehensive access to the YNAB (https://www.ynab.com) aka You Need A Budget API. This server exposes all YNAB API functionality as MCP tools, allowing AI assistants and other MCP clients to interact with YNAB budgets, accounts, transactions, and more.
+A [Model Context Protocol](https://modelcontextprotocol.io) server for the
+[YNAB](https://www.ynab.com) (You Need A Budget) API. It exposes budgets,
+accounts, transactions, categories, and payees as MCP tools so Claude can read
+and update your budget.
 
-## Features
-
-- **Complete YNAB API Coverage**: All YNAB API methods are exposed as MCP tools
-- **uv Integration**: Fast dependency management with uv
-- **Type-Safe**: Built with Python type hints and Pydantic models
-- **Error Handling**: Comprehensive error handling and logging
-- **Debug Logging**: Optional tool call logging for debugging MCP interactions
-- **Environment Configuration**: Simple configuration via environment variables
-- **Organized Tool Structure**: Tools are logically grouped by category (budgets, accounts, transactions, etc.)
+> **Reconciling Amazon purchases?** If you use this alongside the Amazon
+> Transaction Scraper and the `amazon-ynab-correlator` skill, follow the
+> end-to-end guide in the scraper's `SETUP.md` instead. It wires both MCP
+> servers into Claude Desktop together.
 
 ## Prerequisites
 
-- Python 3.10+ with uv installed
-- A YNAB account with a Personal Access Token
+- [uv](https://docs.astral.sh/uv/) (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Python 3.10+ (uv will install it if needed)
+- A YNAB Personal Access Token from https://app.ynab.com/settings/developer
 
-## Getting Your YNAB API Key
+## Setup for Claude Desktop
 
-1. Log in to your YNAB account at https://app.ynab.com
-2. Navigate to Account Settings
-3. Go to the Developer Settings section
-4. Create a new Personal Access Token
-5. Save this token securely - you'll need it for configuration
+1. Clone the repo and install dependencies:
 
-## Installation
+   ```bash
+   git clone https://github.com/EdgeCaseLabs/ynab-mcp.git
+   cd ynab-mcp
+   uv sync
+   ```
 
-> **Reconciling with Amazon purchases?** If you're using this alongside the
-> Amazon Transaction Scraper and the `amazon-ynab-correlator` skill, follow the
-> combined end-to-end guide in the scraper's `SETUP.md` instead — it covers
-> installing and wiring both MCP servers into Claude Desktop.
+2. Find your `uv` path. Claude Desktop does not inherit your shell `PATH`, so
+   the config below needs the absolute path:
 
-> **Which install method?** Prefer **Install from Source** below. It uses the
-> pinned SDK version (`uv.lock`) this server is tested against. The PyPI/`uvx`
-> builds may lag behind and can break tools such as `create_transaction` when
-> the upstream YNAB SDK renames models.
+   ```bash
+   which uv
+   ```
 
-### Quick Install
+3. Add the server to your Claude Desktop config:
 
-If you have `uv` installed, you can run the server directly without cloning:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```json
+   {
+     "mcpServers": {
+       "ynab": {
+         "command": "/absolute/path/to/uv",
+         "args": [
+           "run",
+           "--directory",
+           "/absolute/path/to/ynab-mcp",
+           "python",
+           "-m",
+           "ynab_mcp_server"
+         ],
+         "env": {
+           "YNAB_API_KEY": "your_ynab_api_key_here",
+           "DEFAULT_BUDGET_ID": ""
+         }
+       }
+     }
+   }
+   ```
 
-# Run the server directly from PyPI
-uvx ynab-mcp-server
+   Replace both absolute paths. A copy of this snippet lives in
+   `claude_desktop_config.json`.
 
-# Or with debug logging
-uvx ynab-mcp-server --logging
-```
+4. Restart Claude Desktop. The YNAB tools appear under the tools menu.
 
-### Install from PyPI
+5. Try it:
 
-```bash
-# Using pip
-pip install ynab-mcp-server
-
-# Or using uv
-uv pip install ynab-mcp-server
-
-# Run the server
-ynab-mcp-server
-```
-
-### Install from Source
-
-1. Clone the repository:
-```bash
-git clone https://github.com/EdgeCaseLabs/ynab-mcp.git
-cd ynab-mcp
-```
-
-2. Install dependencies:
-```bash
-uv sync
-```
-
-3. Copy and configure environment:
-```bash
-cp .env.sample .env
-# Edit .env with your YNAB API key
-```
-
-4. Test the server:
-```bash
-# Run normally
-uv run python -m ynab_mcp_server
-
-# Run with debug logging enabled
-uv run python -m ynab_mcp_server --logging
-```
+   - "Show me my budgets"
+   - "What's the balance in my checking account?"
+   - "How much have I spent on groceries this month?"
+   - "Create a $25 transaction at Starbucks in my checking account"
 
 ## Configuration
 
-### Environment Variables
+Set these in the `env` block of the Claude Desktop config. (A `.env` file in
+the repo root also works; see `.env.sample`.)
 
 | Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
-| `YNAB_API_KEY` | Yes | Your YNAB Personal Access Token | - |
-| `DEFAULT_BUDGET_ID` | No | Default budget ID to use when not specified | `last-used` |
-| `LOG_LEVEL` | No | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO` |
-| `MCP_SERVER_NAME` | No | Name of the MCP server | `YNAB MCP Server` |
+| `YNAB_API_KEY` | Yes | YNAB Personal Access Token | - |
+| `DEFAULT_BUDGET_ID` | No | Budget used when a tool call omits `budget_id` | `last-used` |
+| `LOG_LEVEL` | No | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+## Claude Code
+
+The repo also works as a Claude Code plugin:
+
+```bash
+cd ynab-mcp
+uv sync
+cp .env.sample .env   # set YNAB_API_KEY
+claude plugin install .
+```
+
+See [.claude-plugin/README.md](.claude-plugin/README.md).
 
 ## Available Tools
 
-### User Tools
-- `get_user()` - Get authenticated user information
-- `verify_api_key()` - Verify API key validity
+**User**: `get_user`, `verify_api_key`
 
-### Budget Tools
-- `get_budgets(include_accounts)` - Get list of budgets
-- `get_budget_by_id(budget_id, last_knowledge_of_server)` - Get detailed budget information
-- `get_budget_settings(budget_id)` - Get budget settings
+**Budgets**: `get_budgets`, `get_budget_by_id`, `get_budget_settings`
 
-### Account Tools
-- `get_accounts(budget_id, last_knowledge_of_server, include_closed, include_deleted)` - Get accounts (excludes closed/deleted by default)
-- `get_account_by_id(account_id, budget_id)` - Get specific account
-- `create_account(name, type, balance, budget_id)` - Create new account
-- `get_account_balance(account_id, budget_id)` - Get account balance
+**Accounts**: `get_accounts`, `get_account_by_id`, `get_account_balance`,
+`create_account`
 
-### Transaction Tools
-- `get_transactions(budget_id, since_date, type, last_knowledge_of_server)` - Get transactions
-- `get_transaction_by_id(transaction_id, budget_id)` - Get specific transaction
-- `create_transaction(...)` - Create new transaction
-- `update_transaction(...)` - Update existing transaction
-- `delete_transaction(transaction_id, budget_id)` - Delete transaction
-- `import_transactions(budget_id)` - Import transactions from linked accounts
+**Transactions**: `get_transactions`, `get_transaction_by_id`,
+`create_transaction`, `update_transaction`, `delete_transaction`,
+`import_transactions`
 
-### Category Tools
-- `get_categories(budget_id, last_knowledge_of_server)` - Get all categories
-- `get_category_by_id(category_id, budget_id)` - Get specific category
-- `get_month_category(category_id, month, budget_id)` - Get category for specific month
-- `update_category(category_id, name, note, hidden, budget_id)` - Update category
-- `update_month_category(category_id, month, budgeted, budget_id)` - Update monthly budget
-- `get_category_balance(category_id, month, budget_id)` - Get category balance
+**Categories**: `get_categories`, `get_category_by_id`, `get_month_category`,
+`get_category_balance`, `update_category`, `update_month_category`
 
-### Payee Tools
-- `get_payees(budget_id, last_knowledge_of_server)` - Get all payees
-- `get_payee_by_id(payee_id, budget_id)` - Get specific payee
-- `update_payee(payee_id, name, budget_id)` - Update payee name
-- `search_payees(search_term, budget_id)` - Search payees by name
-- `get_payee_locations(budget_id)` - Get all payee locations
-- `get_payee_location_by_id(payee_location_id, budget_id)` - Get specific location
-- `get_payee_locations_by_payee(payee_id, budget_id)` - Get locations for payee
+**Payees**: `get_payees`, `get_payee_by_id`, `search_payees`, `update_payee`,
+`get_payee_locations`, `get_payee_location_by_id`,
+`get_payee_locations_by_payee`
 
-## Usage Examples
+Most tools accept an optional `budget_id`; when omitted, `DEFAULT_BUDGET_ID`
+(or `last-used`) applies.
 
-### Claude Code Plugin (Recommended)
+### Milliunits
 
-The easiest way to use this with Claude Code is to install it as a plugin:
-
-```bash
-# Option 1: Install from local directory
-cd /path/to/ynab-mcp
-uv sync
-cp .env.sample .env
-# Edit .env with your YNAB API key
-claude plugin install .
-
-# Option 2: Install from GitHub (once published)
-claude plugin install https://github.com/EdgeCaseLabs/ynab-mcp.git
-# Then create .env file in ~/.claude/plugins/repos/ynab/
-```
-
-After installation, the YNAB tools will be automatically available in all your Claude Code sessions. See [.claude-plugin/README.md](.claude-plugin/README.md) for more details.
-
-### Claude Desktop Configuration
-
-To connect this YNAB MCP server to Claude Desktop, you need to configure it in your Claude Desktop settings.
-
-#### Configure Claude Desktop
-
-Create or edit your Claude Desktop configuration file:
-
-**macOS/Linux**: `~/.config/claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
-Add the YNAB MCP server configuration (see `claude_desktop_config.json` for a complete example):
-
-```json
-{
-  "mcpServers": {
-    "ynab": {
-      "command": "uvx",
-      "args": ["ynab-mcp-server"],
-      "env": {
-        "YNAB_API_KEY": "your_ynab_api_key_here",
-        "DEFAULT_BUDGET_ID": "optional_default_budget_id"
-      }
-    }
-  }
-}
-```
-
-**Alternative configurations:**
-
-If you installed from source:
-```json
-{
-  "mcpServers": {
-    "ynab": {
-      "command": "/path/to/uv",
-      "args": ["run", "--directory", "/absolute/path/to/ynab-mcp", "python", "-m", "ynab_mcp_server"],
-      "env": {
-        "YNAB_API_KEY": "your_ynab_api_key_here",
-        "DEFAULT_BUDGET_ID": "optional_default_budget_id"
-      }
-    }
-  }
-}
-```
-
-To enable debug logging, add `"--logging"` to the args array:
-```json
-"args": ["ynab-mcp-server", "--logging"]
-```
-
-**Important**: 
-- Replace `/path/to/uv` with the output of `which uv` on your system
-- Replace `/absolute/path/to/ynab-mcp` with the actual absolute path to your project directory
-
-#### Restart Claude Desktop
-
-After updating the configuration, restart Claude Desktop. You should now see YNAB tools available in your conversations.
-
-#### Test the Connection
-
-Try asking Claude to help with your budget:
-
-- "Show me my current budgets"
-- "What's the balance in my checking account?"
-- "Create a transaction for $25 coffee at Starbucks"
-- "How much have I spent on groceries this month?"
-
-### Using with Other MCP Clients
-
-Once the server is running, you can connect to it using any MCP-compatible client. Here are some example tool calls:
-
-```python
-# Get all budgets
-result = await client.call_tool("get_budgets", {"include_accounts": True})
-
-# Get transactions for current month
-result = await client.call_tool("get_transactions", {
-    "budget_id": "default",
-    "since_date": "2024-01-01"
-})
-
-# Create a new transaction
-result = await client.call_tool("create_transaction", {
-    "account_id": "account-uuid",
-    "amount": -25000,  # $25.00 in milliunits
-    "date": "2024-01-15",
-    "payee_name": "Coffee Shop",
-    "category_id": "category-uuid",
-    "memo": "Morning coffee",
-    "cleared": "cleared"
-})
-
-# Update category budget for current month
-result = await client.call_tool("update_month_category", {
-    "category_id": "category-uuid",
-    "month": "2024-01-01",
-    "budgeted": 500000  # $500.00 in milliunits
-})
-```
-
-### Understanding Milliunits
-
-YNAB uses milliunits for all monetary values:
-- 1 dollar = 1000 milliunits
-- $10.50 = 10500 milliunits
-- -$25.00 = -25000 milliunits (negative for expenses)
-
-## Development
-
-### Running Tests
-```bash
-uv run pytest
-```
-
-### Linting and Formatting
-```bash
-# Format code
-uv run black ynab_mcp_server/
-
-# Lint code
-uv run ruff ynab_mcp_server/
-
-# Type checking
-uv run mypy ynab_mcp_server/
-```
-
-### Adding New Tools
-
-To add new tools, create or modify files in `ynab_mcp_server/tools/` and register them in `ynab_mcp_server/server.py`:
-
-1. Create tool function with MCP decorator
-2. Add comprehensive docstring
-3. Handle errors appropriately
-4. Register in the main server
-
-## Architecture
-
-```
-ynab-mcp/
-├── ynab_mcp_server/        # Main package
-│   ├── __init__.py         # Package initialization
-│   ├── __main__.py         # Module entry point
-│   ├── server.py           # Main MCP server
-│   ├── debug_utils.py      # Debug logging utilities
-│   └── tools/              # Tool implementations
-│       ├── budgets.py      # Budget-related tools
-│       ├── accounts.py     # Account tools
-│       ├── transactions.py # Transaction tools
-│       ├── categories.py   # Category tools
-│       ├── payees.py       # Payee tools
-│       └── user.py         # User tools
-├── pyproject.toml          # uv dependencies
-├── uv.lock                 # Locked dependencies
-├── claude_desktop_config.json # Sample Claude Desktop config
-├── CLAUDE.md               # Development guide for Claude Code
-└── .env.sample            # Environment template
-```
-
-## Debugging
-
-### Debug Logging
-
-The server supports debug logging to help troubleshoot MCP tool calls:
-
-```bash
-# Enable debug logging (if installed from PyPI)
-ynab-mcp-server --logging
-
-# Or using uvx
-uvx ynab-mcp-server --logging
-
-# Or from source
-uv run python -m ynab_mcp_server --logging
-```
-
-When enabled, all tool calls are logged to stderr in the format:
-```
-TOOL_CALL: function_name(param1='value', param2=42)
-```
-
-This is especially useful when:
-- Debugging Claude Desktop integration issues
-- Understanding which tools are being called with what parameters
-- Troubleshooting unexpected tool behavior
+YNAB expresses money in milliunits: `$1.00` = `1000`, `-$25.00` = `-25000`
+(negative for outflows). Tools take and return milliunits.
 
 ## Troubleshooting
 
-### API Key Issues
-- Ensure your API key is correctly set in the `.env` file
-- Verify the key using the `verify_api_key` tool
-- Check that the key has not expired in your YNAB settings
+**Server does not appear in Claude Desktop**
+- `command` must be the absolute path from `which uv`.
+- `--directory` must be the absolute path to the cloned repo.
+- Check Claude Desktop's MCP log:
+  `~/Library/Logs/Claude/mcp-server-ynab.log` (macOS).
 
+**Debug tool calls**
+Add `"--logging"` to the end of the `args` array. Every tool call is then
+logged to stderr as `TOOL_CALL: name(param=value, ...)`, which shows up in the
+log file above.
 
-### Connection Issues
-- Check network connectivity
-- Ensure the YNAB API is accessible
-- Verify Claude Desktop can find the `uv` command (use full path)
+**API key errors**
+- Ask Claude to run `verify_api_key`.
+- Confirm the token is still active at https://app.ynab.com/settings/developer.
 
-## Rate Limiting
+**Rate limits**
+YNAB allows 200 requests per hour per token, resetting on the hour.
 
-The YNAB API has rate limits. This server handles rate limit responses appropriately, but be mindful of:
-- Maximum of 200 requests per hour
-- Rate limit resets on the hour
-- Consider caching frequently accessed data
+## Development
+
+```bash
+uv run pytest                        # tests
+uv run black ynab_mcp_server/        # format
+uv run ruff ynab_mcp_server/         # lint
+uv run mypy ynab_mcp_server/         # types
+uv run python -m ynab_mcp_server     # run server directly (stdio)
+```
+
+Tools live in `ynab_mcp_server/tools/` and are registered in
+`ynab_mcp_server/server.py`.
 
 ## Security
 
-- Never commit your `.env` file with real API keys
-- Store API keys securely in environment variables
-- Rotate API keys regularly
-- Use read-only keys when possible
-
-## Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+- Never commit a config or env file containing a real API key.
+- Rotate your YNAB token if it leaks.
 
 ## License
 
-MIT License - See LICENSE file for details
-
-## Support
-
-For issues and questions:
-- Check the [YNAB API documentation](https://api.ynab.com)
-- Review [MCP documentation](https://modelcontextprotocol.io)
-- Open an issue on GitHub
-
-## Acknowledgments
-
-- Built with the official [YNAB Python SDK](https://github.com/ynab/ynab-sdk-python)
-- Powered by [Model Context Protocol](https://modelcontextprotocol.io)
-- Fast dependency management with [uv](https://github.com/astral-sh/uv)
+MIT. See [LICENSE](LICENSE).

@@ -6,25 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Running the Server
 ```bash
-# From PyPI installation
-ynab-mcp-server
-ynab-mcp-server --logging  # With debug logging
-
-# From source
 uv run python -m ynab_mcp_server
 uv run python -m ynab_mcp_server --logging  # With debug logging
-
-# Direct with uvx (no installation needed)
-uvx ynab-mcp-server
 ```
 
 ### Development Tools
 ```bash
 # Install dependencies
 uv sync
-
-# Build package
-uv build
 
 # Run tests
 uv run pytest
@@ -33,10 +22,6 @@ uv run pytest
 uv run black ynab_mcp_server/
 uv run ruff ynab_mcp_server/
 uv run mypy ynab_mcp_server/
-
-# Test package installation locally
-uv pip install -e .
-python -m ynab_mcp_server --help
 ```
 
 ### Environment Setup
@@ -49,7 +34,7 @@ This is a **Model Context Protocol (MCP) server** that exposes the YNAB (You Nee
 
 ### Core Architecture Concepts
 
-**Server Structure**: Uses FastMCP framework with a modular tool registration system. The main server (`ynab_mcp_server/server.py`) imports and registers tool modules from `ynab_mcp_server/tools/`, each containing domain-specific YNAB API operations. The package is structured for PyPI distribution with entry points.
+**Server Structure**: Uses FastMCP framework with a modular tool registration system. The main server (`ynab_mcp_server/server.py`) imports and registers tool modules from `ynab_mcp_server/tools/`, each containing domain-specific YNAB API operations.
 
 **Tool Organization**: Tools are grouped by YNAB domain:
 - `budgets.py` - Budget management (3 tools)
