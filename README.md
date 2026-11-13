@@ -85,16 +85,18 @@ the repo root also works; see `.env.sample`.)
 
 ## Claude Code
 
-The repo also works as a Claude Code plugin:
+Same server, registered with the `claude mcp` CLI instead of the Desktop
+config file:
 
 ```bash
-cd ynab-mcp
-uv sync
-cp .env.sample .env   # set YNAB_API_KEY
-claude plugin install .
+claude mcp add ynab --scope user \
+  -e YNAB_API_KEY=your_ynab_api_key_here \
+  -e DEFAULT_BUDGET_ID= \
+  -- /absolute/path/to/uv run --directory /absolute/path/to/ynab-mcp python -m ynab_mcp_server
 ```
 
-See [.claude-plugin/README.md](.claude-plugin/README.md).
+Use `--scope project` instead to write a `.mcp.json` in the current repo.
+Verify with `claude mcp list`.
 
 ## Available Tools
 
